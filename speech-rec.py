@@ -7,33 +7,43 @@ import webbrowser
 import subprocess
 import datetime
 import platform
+import urllib.parse
 
 
 class VoiceAssistant:
+
     def __init__(self, root):
+
         self.root = root
         self.root.title("Accessible Voice Assistant")
         self.root.geometry("900x650")
         self.root.minsize(700, 500)
 
-        # -----------------------------
-        # Voice engine
-        # -----------------------------
+        # ==========================================
+        # Text-to-Speech
+        # ==========================================
+
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 155)
         self.engine.setProperty("volume", 1.0)
 
         voices = self.engine.getProperty("voices")
+
         if voices:
             self.engine.setProperty("voice", voices[0].id)
+
+        # ==========================================
+        # Speech Recognition
+        # ==========================================
 
         self.recognizer = sr.Recognizer()
 
         self.listening = False
 
-        # -----------------------------
-        # Accessibility settings
-        # -----------------------------
+        # ==========================================
+        # Accessibility / UI settings
+        # ==========================================
+
         self.bg_color = "#111111"
         self.fg_color = "#FFFFFF"
         self.button_color = "#333333"
@@ -48,11 +58,12 @@ class VoiceAssistant:
         self.root.bind("<Escape>", self.stop_assistant)
 
     # =========================================================
-    # GUI
+    # CREATE GUI
     # =========================================================
 
     def create_interface(self):
 
+        # Title
         title = tk.Label(
             self.root,
             text="Accessible Voice Assistant",
@@ -60,8 +71,10 @@ class VoiceAssistant:
             bg=self.bg_color,
             fg=self.fg_color
         )
+
         title.pack(pady=20)
 
+        # Instructions
         instruction = tk.Label(
             self.root,
             text="Press SPACE or click LISTEN to give a voice command",
@@ -69,12 +82,10 @@ class VoiceAssistant:
             bg=self.bg_color,
             fg=self.fg_color
         )
+
         instruction.pack(pady=5)
 
-        # -----------------------------
         # Status
-        # -----------------------------
-
         self.status_label = tk.Label(
             self.root,
             text="Ready",
@@ -82,12 +93,10 @@ class VoiceAssistant:
             bg=self.bg_color,
             fg="#00FF00"
         )
+
         self.status_label.pack(pady=10)
 
-        # -----------------------------
-        # Conversation area
-        # -----------------------------
-
+        # Conversation box
         self.conversation = scrolledtext.ScrolledText(
             self.root,
             width=70,
@@ -108,9 +117,9 @@ class VoiceAssistant:
 
         self.conversation.config(state=tk.DISABLED)
 
-        # -----------------------------
-        # Listen button
-        # -----------------------------
+        # ==========================================
+        # LISTEN BUTTON
+        # ==========================================
 
         self.listen_button = tk.Button(
             self.root,
@@ -129,9 +138,9 @@ class VoiceAssistant:
 
         self.listen_button.pack(pady=10)
 
-        # -----------------------------
-        # Stop button
-        # -----------------------------
+        # ==========================================
+        # STOP BUTTON
+        # ==========================================
 
         stop_button = tk.Button(
             self.root,
@@ -146,15 +155,20 @@ class VoiceAssistant:
 
         stop_button.pack(pady=10)
 
-        # -----------------------------
-        # Text input
-        # -----------------------------
+        # ==========================================
+        # TEXT INPUT
+        # ==========================================
 
         input_frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
-        input_frame.pack(fill=tk.X, padx=30, pady=15)
+
+        input_frame.pack(
+            fill=tk.X,
+            padx=30,
+            pady=15
+        )
 
         self.text_entry = tk.Entry(
             input_frame,
@@ -180,10 +194,13 @@ class VoiceAssistant:
             width=8
         )
 
-        send_button.pack(side=tk.RIGHT, padx=(10, 0))
+        send_button.pack(
+            side=tk.RIGHT,
+            padx=(10, 0)
+        )
 
     # =========================================================
-    # Conversation
+    # ADD MESSAGE TO CONVERSATION
     # =========================================================
 
     def add_message(self, speaker, message):
@@ -200,21 +217,27 @@ class VoiceAssistant:
         self.conversation.config(state=tk.DISABLED)
 
     # =========================================================
-    # Text-to-Speech
+    # TEXT TO SPEECH
     # =========================================================
 
     def speak(self, text):
 
-        self.add_message("Assistant", text)
+        self.add_message(
+            "Assistant",
+            text
+        )
 
         try:
+
             self.engine.say(text)
             self.engine.runAndWait()
+
         except Exception as e:
+
             print("TTS error:", e)
 
     # =========================================================
-    # Speech recognition
+    # START LISTENING
     # =========================================================
 
     def start_listening(self):
@@ -239,6 +262,10 @@ class VoiceAssistant:
         )
 
         thread.start()
+
+    # =========================================================
+    # LISTEN TO MICROPHONE
+    # =========================================================
 
     def listen(self):
 
@@ -281,7 +308,7 @@ class VoiceAssistant:
                 self.root.after(
                     0,
                     lambda: self.speak(
-                        "Sorry, I could not understand you."
+                        "Sorry, I could not understand your voice."
                     )
                 )
 
@@ -334,7 +361,7 @@ class VoiceAssistant:
             )
 
     # =========================================================
-    # Text command
+    # TEXT COMMAND
     # =========================================================
 
     def send_text(self):
@@ -351,21 +378,23 @@ class VoiceAssistant:
             self.process_command(command)
 
     # =========================================================
-    # Command processor
+    # PROCESS COMMAND
     # =========================================================
 
     def process_command(self, command):
+
+        original_command = command
 
         command = command.lower().strip()
 
         self.add_message(
             "You",
-            command
+            original_command
         )
 
-        # -----------------------------
-        # Greeting
-        # -----------------------------
+        # ==========================================
+        # GREETING
+        # ==========================================
 
         if any(word in command for word in [
             "hello",
@@ -377,9 +406,9 @@ class VoiceAssistant:
                 "Hello. How can I help you?"
             )
 
-        # -----------------------------
-        # Time
-        # -----------------------------
+        # ==========================================
+        # TIME
+        # ==========================================
 
         elif "time" in command:
 
@@ -391,9 +420,9 @@ class VoiceAssistant:
                 f"The current time is {current_time}"
             )
 
-        # -----------------------------
-        # Date
-        # -----------------------------
+        # ==========================================
+        # DATE
+        # ==========================================
 
         elif "date" in command or "today" in command:
 
@@ -405,33 +434,37 @@ class VoiceAssistant:
                 f"Today is {today}"
             )
 
-        # -----------------------------
-        # Google
-        # -----------------------------
+        # ==========================================
+        # OPEN GOOGLE
+        # ==========================================
 
         elif "open google" in command:
 
-            self.speak("Opening Google.")
+            self.speak(
+                "Opening Google."
+            )
 
             webbrowser.open(
                 "https://www.google.com"
             )
 
-        # -----------------------------
-        # YouTube
-        # -----------------------------
+        # ==========================================
+        # OPEN YOUTUBE
+        # ==========================================
 
         elif "open youtube" in command:
 
-            self.speak("Opening YouTube.")
+            self.speak(
+                "Opening YouTube."
+            )
 
             webbrowser.open(
                 "https://www.youtube.com"
             )
 
-        # -----------------------------
-        # Search Google
-        # -----------------------------
+        # ==========================================
+        # GOOGLE SEARCH
+        # ==========================================
 
         elif command.startswith("search"):
 
@@ -444,13 +477,15 @@ class VoiceAssistant:
             if query:
 
                 self.speak(
-                    f"Searching for {query}"
+                    f"Searching Google for {query}"
                 )
 
-                webbrowser.open(
+                search_url = (
                     "https://www.google.com/search?q="
-                    + query.replace(" ", "+")
+                    + urllib.parse.quote(query)
                 )
+
+                webbrowser.open(search_url)
 
             else:
 
@@ -458,9 +493,9 @@ class VoiceAssistant:
                     "What would you like me to search for?"
                 )
 
-        # -----------------------------
-        # Open calculator
-        # -----------------------------
+        # ==========================================
+        # OPEN CALCULATOR
+        # ==========================================
 
         elif "open calculator" in command:
 
@@ -468,27 +503,35 @@ class VoiceAssistant:
                 "Opening calculator."
             )
 
-            if platform.system() == "Windows":
+            try:
 
-                subprocess.Popen(
-                    "calc.exe"
+                if platform.system() == "Windows":
+
+                    subprocess.Popen(
+                        "calc.exe"
+                    )
+
+                elif platform.system() == "Darwin":
+
+                    subprocess.Popen(
+                        ["open", "-a", "Calculator"]
+                    )
+
+                else:
+
+                    subprocess.Popen(
+                        ["gnome-calculator"]
+                    )
+
+            except Exception:
+
+                self.speak(
+                    "I could not open the calculator."
                 )
 
-            elif platform.system() == "Darwin":
-
-                subprocess.Popen(
-                    ["open", "-a", "Calculator"]
-                )
-
-            else:
-
-                subprocess.Popen(
-                    ["gnome-calculator"]
-                )
-
-        # -----------------------------
-        # Open notepad
-        # -----------------------------
+        # ==========================================
+        # OPEN NOTEPAD
+        # ==========================================
 
         elif "open notepad" in command:
 
@@ -496,48 +539,59 @@ class VoiceAssistant:
                 "Opening notepad."
             )
 
-            if platform.system() == "Windows":
+            try:
 
-                subprocess.Popen(
-                    "notepad.exe"
+                if platform.system() == "Windows":
+
+                    subprocess.Popen(
+                        "notepad.exe"
+                    )
+
+                elif platform.system() == "Darwin":
+
+                    subprocess.Popen(
+                        ["open", "-a", "TextEdit"]
+                    )
+
+                else:
+
+                    subprocess.Popen(
+                        ["gedit"]
+                    )
+
+            except Exception:
+
+                self.speak(
+                    "I could not open the text editor."
                 )
 
-            elif platform.system() == "Darwin":
+        # ==========================================
+        # STOP SPEECH
+        # ==========================================
 
-                subprocess.Popen(
-                    ["open", "-a", "TextEdit"]
-                )
-
-            else:
-
-                subprocess.Popen(
-                    ["gedit"]
-                )
-
-        # -----------------------------
-        # Stop speaking
-        # -----------------------------
-
-        elif "stop" in command:
+        elif "stop speaking" in command:
 
             self.stop_speech()
 
-        # -----------------------------
-        # Help
-        # -----------------------------
+        # ==========================================
+        # HELP
+        # ==========================================
 
-        elif "help" in command or "what can you do" in command:
+        elif (
+            "help" in command
+            or "what can you do" in command
+        ):
 
             self.speak(
                 "You can ask me for the time, "
                 "today's date, open Google, "
-                "open YouTube, search the internet, "
+                "open YouTube, search Google, "
                 "open calculator, or open notepad."
             )
 
-        # -----------------------------
-        # Exit
-        # -----------------------------
+        # ==========================================
+        # EXIT
+        # ==========================================
 
         elif any(word in command for word in [
             "exit",
@@ -554,19 +608,28 @@ class VoiceAssistant:
                 self.root.destroy
             )
 
-        # -----------------------------
-        # Unknown command
-        # -----------------------------
+        # ==========================================
+        # UNKNOWN COMMAND
+        #
+        # Automatically search Google
+        # ==========================================
 
         else:
 
             self.speak(
-                "I don't know that command yet. "
-                "Say help to hear what I can do."
+                f"I don't know that command. "
+                f"Searching Google for {original_command}."
             )
 
+            search_url = (
+                "https://www.google.com/search?q="
+                + urllib.parse.quote(original_command)
+            )
+
+            webbrowser.open(search_url)
+
     # =========================================================
-    # Keyboard accessibility
+    # KEYBOARD LISTEN
     # =========================================================
 
     def keyboard_listen(self, event=None):
@@ -574,14 +637,16 @@ class VoiceAssistant:
         self.start_listening()
 
     # =========================================================
-    # Stop speech
+    # STOP SPEECH
     # =========================================================
 
     def stop_speech(self):
 
         try:
+
             self.engine.stop()
-        except:
+
+        except Exception:
             pass
 
         self.status_label.config(
@@ -590,7 +655,7 @@ class VoiceAssistant:
         )
 
     # =========================================================
-    # Stop assistant
+    # STOP ASSISTANT
     # =========================================================
 
     def stop_assistant(self, event=None):
@@ -606,7 +671,7 @@ class VoiceAssistant:
 
 
 # =============================================================
-# Run application
+# RUN APPLICATION
 # =============================================================
 
 if __name__ == "__main__":
