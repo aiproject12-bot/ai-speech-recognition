@@ -1,2 +1,4 @@
 pyttsx3==2.99
 speechrecognition==3.17.0
+pyaudio
+tkinter
